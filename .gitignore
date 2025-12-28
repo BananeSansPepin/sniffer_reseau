@@ -1,0 +1,27 @@
+# Exécutables
+sniffer
+*.o
+*.out
+
+# Fichiers de compilation
+*.log
+*.aux
+*.toc
+*.pdf
+
+# Fichiers de capture (optionnel - décommentez si vous ne voulez pas les versionner)
+# *.pcap
+# *.cap
+
+# Fichiers d'éditeur
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.code-workspace
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+
