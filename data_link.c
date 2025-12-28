@@ -2,6 +2,7 @@
 #include <arpa/inet.h>
 #include <net/ethernet.h>
 
+#include "data_link.h"
 #include "network.h"
 
 //--------------------------------------

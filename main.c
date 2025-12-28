@@ -11,14 +11,20 @@
 int numero;
 pcap_t *handle;
 
+// Prototypes des fonctions locales
+static void signal_handler(int signo);
+void packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_char *packet);
+void usage(void);
 
 // gère le signal d'arrêt du programme (CTRL + C)
 static void signal_handler(int signo) {
+    (void)signo; // paramètre requis par la signature mais non utilisé
     pcap_breakloop(handle); // on arrête tout, car demandé
 }
 
 // gère les paquets reçus
 void packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_char *packet) {
+	(void)args; // paramètre requis par pcap_loop mais non utilisé
 	
 	struct tm *ts;
 	char buf[80];
@@ -33,7 +39,7 @@ void packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_char
 }
 
 // affichage de l'aide si besoin
-void usage() {
+void usage(void) {
 	printf("Utilisation : ./sniffer\n\t[-i <interface>\n\t-o <fichier>\n\t-f <filtre BPF>]\n");
 }
 
@@ -46,6 +52,7 @@ int main(int argc, char *argv[]) {
 	bpf_u_int32 net;
 	numero = 0;
 	char *fichier = NULL, *filtre = NULL, *interface = NULL;
+	char *interface_allocated = NULL; // Pour libérer la mémoire si allouée
 
 	// Enregistre le signal pour pouvoir le gérer ensuite
     if (signal(SIGINT, signal_handler) == SIG_ERR) {
@@ -74,11 +81,28 @@ int main(int argc, char *argv[]) {
 
 	// choisit automatiquement l'interface par défaut si non spécifiée
 	if(interface == NULL) {
-		interface = pcap_lookupdev(errbuf);
-		if (interface == NULL) {
-			fprintf(stderr, "Impossible de trouver l'interface par défaut: %s\n", errbuf);
+		pcap_if_t *alldevs;
+		
+		if (pcap_findalldevs(&alldevs, errbuf) == -1) {
+			fprintf(stderr, "Impossible de trouver les interfaces: %s\n", errbuf);
 			return -1;
 		}
+		
+		// Utiliser la première interface disponible
+		if (alldevs == NULL) {
+			fprintf(stderr, "Aucune interface disponible\n");
+			return -1;
+		}
+		
+		interface_allocated = strdup(alldevs->name);
+		pcap_freealldevs(alldevs);
+		
+		if (interface_allocated == NULL) {
+			fprintf(stderr, "Erreur d'allocation mémoire\n");
+			return -1;
+		}
+		
+		interface = interface_allocated;
 	}
 
 	// récupère le masque réseau
@@ -120,10 +144,23 @@ int main(int argc, char *argv[]) {
 
 	// boucle sur les paquets reçu/analysés
 	pcap_loop(handle, -1, packet_handler, (u_char*)&verbose);
+	
+	// Libérer la mémoire allouée pour interface si elle a été allouée
+	if (interface != NULL && strcmp(interface, "") != 0) {
+		// Vérifier si c'est une allocation dynamique (seulement si pcap_findalldevs a été utilisé)
+		// Pour simplifier, on ne libère que si nécessaire
+		// En pratique, interface pointe soit vers optarg soit vers une allocation strdup
+	}
 
 	//Si l'on a terminé le programem (CTRL+C), on arrive ici (fin du code)
 	printf("\n\n%d paquets capturés\n", numero);
 	// fermeture propre de la session
 	pcap_close(handle);
+	
+	// Libérer la mémoire allouée pour l'interface si nécessaire
+	if (interface_allocated != NULL) {
+		free(interface_allocated);
+	}
+	
 	return 0;
 }

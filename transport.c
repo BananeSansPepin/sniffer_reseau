@@ -3,6 +3,7 @@
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 
+#include "transport.h"
 #include "application.h"
 
 //--------------------------------------
@@ -174,7 +175,7 @@ void tcp_view(const u_char *packet, int tcp_size) {
 	// 1 octet pour le type de l'option, 1 octets pour sa longueur et 2 pour sa valeur
 	// source est + d'infos sur https://www.iana.org/assignments/tcp-parameters/tcp-parameters.xhtml
 
-	if(tcp_size > sizeof(struct tcphdr)) {
+	if(tcp_size > (int)sizeof(struct tcphdr)) {
 	
 		printf("\t\tOptions:\n");
 		for(i=sizeof(struct tcphdr); i<tcphdr_size && packet[i] != 0x00; i++) {
