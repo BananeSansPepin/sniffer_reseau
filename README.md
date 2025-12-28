@@ -195,7 +195,7 @@ Type: IPv4 (0x0800)
 
 ---
 
-## 📚 Compétences acquises à travers ce projet:
+## Compétences acquises à travers ce projet:
 
 - Compréhension approfondie du modèle OSI
 - Maîtrise des protocoles réseau (Ethernet, IP, TCP, UDP, ARP)
